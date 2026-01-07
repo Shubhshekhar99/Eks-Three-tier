@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: mern-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: 360477615168.dkr.ecr.eu-north-1.amazonaws.com/mern-backend:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: PORT
+              value: "5000"
+            - name: MONGODB_ATLAS_CONNECTION
+              value: mongodb://mongo.mern-app.svc.cluster.local:27017/todos
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: mern-app
+spec:
+  type: ClusterIP
+  selector:
+    app: backend
+  ports:
+    - port: 5000
+      targetPort: 5000
