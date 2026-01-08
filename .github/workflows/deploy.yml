@@ -50,11 +50,6 @@ jobs:
             --region ${{ secrets.AWS_REGION }} \
             --name ${{ secrets.EKS_CLUSTER_NAME }}
 
-      # 7️⃣ Ensure namespace exists
-      - name: Ensure Namespace Exists
-        run: |
-          kubectl get namespace three-tier || kubectl create namespace three-tier
-
       # 8️⃣ Deploy Database (MongoDB)
       - name: Deploy Database
         run: |
