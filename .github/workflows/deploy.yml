@@ -32,14 +32,14 @@ jobs:
       # 4️⃣ Build & Push Backend Image
       - name: Build & Push Backend Image
         run: |
-          docker build -t backend ./backend
+          docker build -t backend ./server
           docker tag backend:latest ${{ secrets.ECR_BACKEND }}:${{ github.sha }}
           docker push ${{ secrets.ECR_BACKEND }}:${{ github.sha }}
 
       # 5️⃣ Build & Push Frontend Image
       - name: Build & Push Frontend Image
         run: |
-          docker build -t frontend ./frontend
+          docker build -t frontend ./client
           docker tag frontend:latest ${{ secrets.ECR_FRONTEND }}:${{ github.sha }}
           docker push ${{ secrets.ECR_FRONTEND }}:${{ github.sha }}
 
