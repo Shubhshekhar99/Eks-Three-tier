@@ -6,7 +6,7 @@ on:
       - main
 
 permissions:
-  id-token: write        # Needed for OIDC
+  id-token: write
   contents: read
 
 jobs:
@@ -43,15 +43,14 @@ jobs:
         docker tag frontend:latest ${{ secrets.ECR_FRONTEND }}:latest
         docker push ${{ secrets.ECR_FRONTEND }}:latest
 
-    # 6️⃣ Update kubeconfig for CI/CD
+    # 6️⃣ Update kubeconfig (NO role-arn here)
     - name: Update kubeconfig
       run: |
         aws eks update-kubeconfig \
           --region ${{ secrets.AWS_REGION }} \
-          --name ${{ secrets.EKS_CLUSTER_NAME }} \
-          --role-arn ${{ secrets.AWS_ROLE_ARN }}
+          --name ${{ secrets.EKS_CLUSTER_NAME }}
 
-    # 7️⃣ Test kubectl access
+    # 7️⃣ Verify cluster access
     - name: Test kubectl access
       run: kubectl get nodes
 
