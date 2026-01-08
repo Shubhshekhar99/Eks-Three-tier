@@ -54,7 +54,7 @@ jobs:
       - name: Deploy Database
         run: |
           kubectl apply -f k8s/database/mongodb.yaml -n three-tier
-          kubectl rollout status statefulset/mongodb -n three-tier
+          kubectl rollout status statefulset/mongo -n three-tier
 
       # 9️⃣ Deploy Backend
       - name: Deploy Backend
