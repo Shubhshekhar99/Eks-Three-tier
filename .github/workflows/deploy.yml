@@ -1,4 +1,4 @@
-name: CI-CD Deploy to EKS
+name: ci-cd-deploy-to-eks
 
 on:
   push:
@@ -14,58 +14,65 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1️⃣ Checkout the code
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      # 1️⃣ Checkout the code
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    # 2️⃣ Configure AWS credentials via OIDC
-    - name: Configure AWS credentials (OIDC)
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-        aws-region: ${{ secrets.AWS_REGION }}
+      # 2️⃣ Configure AWS credentials via OIDC
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-    # 3️⃣ Login to Amazon ECR
-    - name: Login to Amazon ECR
-      uses: aws-actions/amazon-ecr-login@v2
+      # 3️⃣ Login to Amazon ECR
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
 
-    # 4️⃣ Build & Push Backend Image
-    - name: Build & Push Backend Image
-      run: |
-        docker build -t backend ./server
-        docker tag backend:latest ${{ secrets.ECR_BACKEND }}:latest
-        docker push ${{ secrets.ECR_BACKEND }}:latest
+      # 4️⃣ Build & Push Backend Image
+      - name: Build & Push Backend Image
+        run: |
+          docker build -t backend ./backend
+          docker tag backend:latest ${{ secrets.ECR_BACKEND }}:${{ github.sha }}
+          docker push ${{ secrets.ECR_BACKEND }}:${{ github.sha }}
 
-    # 5️⃣ Build & Push Frontend Image
-    - name: Build & Push Frontend Image
-      run: |
-        docker build -t frontend ./client
-        docker tag frontend:latest ${{ secrets.ECR_FRONTEND }}:latest
-        docker push ${{ secrets.ECR_FRONTEND }}:latest
+      # 5️⃣ Build & Push Frontend Image
+      - name: Build & Push Frontend Image
+        run: |
+          docker build -t frontend ./frontend
+          docker tag frontend:latest ${{ secrets.ECR_FRONTEND }}:${{ github.sha }}
+          docker push ${{ secrets.ECR_FRONTEND }}:${{ github.sha }}
 
-    # 6️⃣ Update kubeconfig
-    - name: Update kubeconfig
-      run: |
-        aws eks update-kubeconfig \
-          --region ${{ secrets.AWS_REGION }} \
-          --name ${{ secrets.EKS_CLUSTER_NAME }}
+      # 6️⃣ Update kubeconfig
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ secrets.AWS_REGION }} \
+            --name ${{ secrets.EKS_CLUSTER_NAME }}
 
-    # 9️⃣ Apply StorageClass (cluster-level)
-    - name: Apply StorageClass
-      run: kubectl apply -f k8s/storageclass-gp3.yaml
+      # 7️⃣ Ensure namespace exists
+      - name: Ensure Namespace Exists
+        run: |
+          kubectl get namespace three-tier || kubectl create namespace three-tier
 
-    # 🔟 Deploy MongoDB
-    - name: Deploy Database
-      run: kubectl apply -f k8s/database/ -n three-tier
+      # 8️⃣ Deploy Database (MongoDB)
+      - name: Deploy Database
+        run: |
+          kubectl apply -f k8s/database/mongodb.yaml -n three-tier
+          kubectl rollout status statefulset/mongodb -n three-tier
 
-    # 1️⃣1️⃣ Deploy Backend
-    - name: Deploy Backend
-      run: kubectl apply -f k8s/backend/ -n three-tier
+      # 9️⃣ Deploy Backend
+      - name: Deploy Backend
+        run: |
+          kubectl apply -f k8s/backend/backend.yaml -n three-tier
+          kubectl rollout status deployment/backend -n three-tier
 
-    # 1️⃣2️⃣ Deploy Frontend
-    - name: Deploy Frontend
-      run: kubectl apply -f k8s/frontend/ -n three-tier
+      # 🔟 Deploy Frontend
+      - name: Deploy Frontend
+        run: |
+          kubectl apply -f k8s/frontend/frontend.yaml -n three-tier
+          kubectl rollout status deployment/frontend -n three-tier
 
-    # 1️⃣3️⃣ Deploy Ingress
-    - name: Deploy Ingress
-      run: kubectl apply -f k8s/ingress/ -n three-tier
+      # 1️⃣1️⃣ Deploy Ingress
+      - name: Deploy Ingress
+        run: kubectl apply -f k8s/ingress/ingress.yaml -n three-tier
