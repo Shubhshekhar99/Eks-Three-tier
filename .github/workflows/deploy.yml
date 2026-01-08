@@ -50,12 +50,6 @@ jobs:
           --region ${{ secrets.AWS_REGION }} \
           --name ${{ secrets.EKS_CLUSTER_NAME }}
 
-    # 8️⃣ Create namespace (safe if already exists)
-    - name: Create namespace
-      run: |
-        kubectl create namespace three-tier \
-          --dry-run=client -o yaml | kubectl apply -f -
-
     # 9️⃣ Apply StorageClass (cluster-level)
     - name: Apply StorageClass
       run: kubectl apply -f k8s/storageclass-gp3.yaml
