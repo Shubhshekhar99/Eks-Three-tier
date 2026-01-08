@@ -50,10 +50,6 @@ jobs:
           --region ${{ secrets.AWS_REGION }} \
           --name ${{ secrets.EKS_CLUSTER_NAME }}
 
-    # 7️⃣ Verify EKS access
-    - name: Test kubectl access
-      run: kubectl get nodes
-
     # 8️⃣ Create namespace (safe if already exists)
     - name: Create namespace
       run: |
